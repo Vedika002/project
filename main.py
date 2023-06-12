@@ -12,7 +12,7 @@ UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Configure OCR
-# pytesseract.pytesseract.tesseract_cmd = r"E:\intern_proj\tesseract.exe"
+pytesseract.pytesseract.tesseract_cmd = "/app/.apt/usr/bin/tesseract"
 
 # Configure scheduler
 scheduler = BackgroundScheduler()
