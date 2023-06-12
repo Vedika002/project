@@ -5,7 +5,7 @@ import pytesseract
 from PIL import Image
 from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
-
+import streamlit as st
 app = Flask(__name__)
 
 # Configure the upload folder
@@ -19,6 +19,7 @@ pytesseract.pytesseract.tesseract_cmd = r"E:\intern_proj\tesseract.exe"
 scheduler = BackgroundScheduler()
 scheduler.start()
 
+st.text('Fixed width text')
 # Route for uploading image
 @app.route('/', methods=['GET', 'POST'])
 def upload_image():
