@@ -64,5 +64,9 @@ def execute_extraction(extracted_data):
     print(extracted_data)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    import threading
+
+    # Disable the reloader to avoid the signal issue
+    app.run(debug=True, use_reloader=False)
+
 
