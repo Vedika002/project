@@ -1,16 +1,13 @@
-from flask import Flask, render_template, request
-import os 
+import streamlit as st
+import os
 from werkzeug.utils import secure_filename
 import pytesseract
 from PIL import Image
 from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
-import streamlit as st
-app = Flask(__name__)
 
 # Configure the upload folder
 UPLOAD_FOLDER = 'uploads'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Configure OCR
 pytesseract.pytesseract.tesseract_cmd = r"E:\intern_proj\tesseract.exe"
@@ -19,38 +16,31 @@ pytesseract.pytesseract.tesseract_cmd = r"E:\intern_proj\tesseract.exe"
 scheduler = BackgroundScheduler()
 scheduler.start()
 
-st.text('Fixed width text')
 # Route for uploading image
-@app.route('/', methods=['GET', 'POST'])
 def upload_image():
-    if request.method == 'POST':
-        # Check if the post request has the file part
-        if 'file' not in request.files:
-            return 'No file uploaded'
+    uploaded_file = st.file_uploader("Upload Image", type=['png', 'jpg', 'jpeg'])
+    if uploaded_file is not None:
+        # Save the uploaded file
+        filename = secure_filename(uploaded_file.name)
+        filepath = os.path.join(UPLOAD_FOLDER, filename)
 
-        file = request.files['file']
+        with open(filepath, 'wb') as f:
+            f.write(uploaded_file.read())
 
-        if file.filename == '':
-            return 'No selected file'
+        # Extract data from the image
+        extracted_data = extract_data(filepath)
 
-        if file:
-            # Save the uploaded file
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        # Get the scheduled time from the form
+        scheduled_time_str = st.text_input('Scheduled Time', value=datetime.now().strftime('%Y-%m-%dT%H:%M'))
 
-            # Extract data from the image
-            extracted_data = extract_data(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        if st.button('Schedule Extraction'):
+            if scheduled_time_str:
+                scheduled_time = datetime.strptime(scheduled_time_str, '%Y-%m-%dT%H:%M')
 
-            # Get the scheduled time from the form
-            scheduled_time_str = request.form['scheduled_time']
-            scheduled_time = datetime.strptime(scheduled_time_str, '%Y-%m-%dT%H:%M')
+                # Schedule the data extraction task
+                scheduler.add_job(execute_extraction, 'date', run_date=scheduled_time, args=[extracted_data])
 
-            # Schedule the data extraction task
-            scheduler.add_job(execute_extraction, 'date', run_date=scheduled_time, args=[extracted_data])
-
-            return 'Data extraction scheduled successfully'
-
-    return render_template('upload.html')
+                st.write('Data extraction scheduled successfully')
 
 # Function to extract data from image
 def extract_data(image_path):
@@ -62,12 +52,11 @@ def extract_data(image_path):
 def execute_extraction(extracted_data):
     # Perform any further processing with the extracted data
     # For example, save it to a database, send email notifications, etc.
-    print(extracted_data)
+    st.write(extracted_data)
+
+def main():
+    st.title('Image Upload')
+    upload_image()
 
 if __name__ == '__main__':
-    import threading
-
-    # Disable the reloader to avoid the signal issue
-    app.run(debug=True, use_reloader=False)
-
-
+    main()
